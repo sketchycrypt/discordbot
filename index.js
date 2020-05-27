@@ -1,10 +1,8 @@
-const users = require('./users.json');
-const funCommands = require('./fun.js');
 const Discord = require('discord.js')
 const bot = new Discord.Client();
 const cheerio = require('cheerio')
 const request = require('request')
-const token = process.env.token;
+const config = require('./config.json')
 
 function checkDays(date) {
     let now = new Date();
@@ -13,12 +11,31 @@ function checkDays(date) {
     return days + (days == 1 ? " day" : " days") + " ago";
 };
 
-const PREFIX = 'fazz!';
+const PREFIX = 'fazzdev!';
 
 bot.on('ready' , () =>{
     console.log('This bot is now online')
-    bot.user.setActivity('with space_weed69' , { type : 'PLAYING'}).catch(console.error);
+    bot.user.setActivity('fazz gang').catch(console.error);
+
+
+    // Initialize Twitch Event Handler
+    require('./TwitchEvents')(bot);
 })
+bot.on('presenceUpdate', (oldMember, newMember) => {
+    const channel = oldMember.guild.channels.find(x => x.name === "stream-announcements");
+    if (!channel) return;
+        let oldStreamingStatus = oldMember.presence.game ? oldMember.presence.game.streaming : false;
+        let newStreamingStatus = newMember.presence.game ? newMember.presence.game.streaming : false;
+
+  if(oldStreamingStatus == newStreamingStatus){
+    return;
+  }
+
+  if(newStreamingStatus){
+        channel.send(`the faggot fazz is live twitch.tv/fazzc \n[@everyone]`);
+    return; 
+    }
+});
 
 bot.on('guildMemberAdd', member =>{
     const channel = member.guild.channels.find(channel => channel.name === "??welcome");
@@ -54,9 +71,28 @@ bot.on('message', msg=>{
                         let reason = args.slice(2).join(' ')
                         mentionedUser.send(`**You were warned in ${msg.guild.name} for** : ` + reason)
                     }else {
-                        msg.channel.sendMessage('You do not have enough permission')
+                        msg.channel.sendMessage('Insufficient permission')
                     }
                 break;
+
+            case 'suggest':
+                let suggestion = args.slice(1).join(' ')
+                const suggestionChannel = bot.channels.find("name", "suggestionel")
+                const suggestionMessage = new Discord.RichEmbed()
+                .setTitle("**New** Suggestion:")
+                .setDescription(`${suggestion}`)
+                .setFooter(`by ${msg.author.username}`)
+                .setThumbnail(msg.author.avatarURL)
+                .setColor(0x00ff00)
+                if(!suggestion.includes("https://")){
+                    msg.channel.send(':mail: | Your **"suggestion"** has been sent to the developer!')
+                    suggestionChannel.sendEmbed(suggestionMessage)
+                }
+                if(suggestion.includes("https://")){
+                    msg.channel.send(':yousuf: nigga you aint gon rick roll me');
+                }
+
+            break;
             
                 case 'pardon':
             const mentionedUser2 = msg.mentions.users.first();
@@ -85,6 +121,12 @@ bot.on('message', msg=>{
                         msg.channel.sendMessage("Insufficient Permission")
                     }
                 break;
+				
+				case 'nickChange':
+				const mentionedNick = msg.mentions.users.first();
+				let nick = args.slice(2).join(' ')
+				msg.member.setNickname(`${nick}`)
+				break;
 
         
                 case 'userprofile':
@@ -161,11 +203,11 @@ bot.on('message', msg=>{
                                 {
                                     const staffhelp = new Discord.RichEmbed()
                                     .setTitle('Help commands for Staff')
-                                    .addField('**pog kick**' , 'Kicks members from server, requires manage guild')
-                                    .addField('**pog ban**' , 'Bans members from the discord, also needs manage guild perms')
-                                    .addField('**pog clear**' , 'Clears desired messages')
-                                    .addField('**pog warn**' , 'Warns member')
-                                    .addField('**pog pardon**' , 'Pardons user who was warned')
+                                    .addField(`${PREFIX} kick**' , 'Kicks members from server, requires manage guild'`)
+                                    .addField(`${PREFIX} ban**' , 'Bans members from the discord, also needs manage guild perms'`)
+                                    .addField(`${PREFIX} clear**' , 'Clears desired messages'`)
+                                    .addField(`${PREFIX} warn**' , 'Warns member'`)
+                                    .addField(`${PREFIX} pardon**' , 'Pardons user who was warned'`)
                                     .setFooter('beep boop i am a bot')
                                     msg.channel.sendEmbed(staffhelp)
                                 }else {
@@ -192,12 +234,7 @@ bot.on('message', msg=>{
                                    }
 
 
-                                break;
-                            
-
-                           
-
-            
+                                break;               
 
                 case 'avatar': 
         if (!msg.mentions.users.size)
@@ -210,12 +247,7 @@ bot.on('message', msg=>{
             msg.channel.send(avatarList);
 
         break;
-
-
-       
-
-             
-                
+            
     }
     
 });
@@ -228,9 +260,30 @@ setInterval(function() {
     console.log("Pinged!")
 }, 300000);
 
-<<<<<<< HEAD
-bot.login(token);
-=======
+
+function CheckOnlineStatus()
+{
+  $.ajax({
+    channelName : `fazzc`,
+    url: "https://api.twitch.tv/kraken/streams/" + channelName,
+    dataType: 'json',
+    headers: {
+      'Client-ID': `2lehd18zwt2wzt9v0skno3n4uqwe80`
+    },
+
+     success: function(channel)
+    {
+      const streamchannel = bot.channels.get("652188494025850911");
+      if (channel["stream"] == null)
+      {
+        alert(null);
+      } else {
+        streamchannel.channel.sendMessage("This faggot streaming lol, https://twitch.tv/fazzc");
+      }
+    }
+  });
+}
+
 (function wakeup() {
   require('open')('https://fazz-bot.herokuapp.com/', (err) => {
     if (err) throw err;
@@ -239,5 +292,4 @@ bot.login(token);
   });
 })()
 
-bot.login(token);
->>>>>>> 68e15a7fe41550193459dd2666477fa7e55c9236
+bot.login(config.token);
